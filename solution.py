@@ -2,8 +2,8 @@
 ==============================================================
 Day 10 Lab: Build Your First Automated ETL Pipeline
 ==============================================================
-Student ID: AI20K-XXXX  (<-- Thay XXXX bang ma so cua ban)
-Name: Your Name Here
+Student ID: 2A202600606
+Name: Vu Thanh Danh 
 
 Nhiem vu:
    1. Extract:   Doc du lieu tu file JSON
@@ -34,20 +34,18 @@ def extract(file_path):
     """
     Task 1: Doc du lieu JSON tu file.
 
-    Goi y:
-       - Dung json.load() de doc file JSON
-       - Xu ly truong hop file khong ton tai (FileNotFoundError)
-
     Returns:
         list: Danh sach cac records (dictionaries)
     """
     print(f"Extracting data from {file_path}...")
-    # TODO: Viet code doc file JSON o day
-    # Vi du:
-    #   with open(file_path, 'r') as f:
-    #       data = json.load(f)
-    #   return data
-    pass
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        print(f"Extracted {len(data)} records from {file_path}.")
+        return data
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return []
 
 
 def validate(data):
@@ -58,21 +56,27 @@ def validate(data):
        - Price phai > 0 (loai bo gia am hoac bang 0)
        - Category khong duoc rong
 
-    Goi y:
-       - Dung record.get('price', 0) de lay gia
-       - Dung record.get('category') de kiem tra category
-       - In ra so luong record hop le va khong hop le
-
     Returns:
         list: Danh sach cac records hop le
     """
     valid_records = []
     error_count = 0
 
-    # TODO: Lap qua data, kiem tra tung record
-    # Giu lai record hop le, dem record loi
+    for record in data:
+        try:
+            price = float(record.get('price', 0))
+        except (TypeError, ValueError):
+            price = 0
 
-    print(f"Validation complete. Valid: {len(valid_records)}, Errors: {error_count}")
+        category = str(record.get('category', '')).strip() if record.get('category') is not None else ''
+
+        if price <= 0 or category == '':
+            error_count += 1
+            continue
+
+        valid_records.append(record)
+
+    print(f"Validation summary: {len(valid_records)} kept, {error_count} dropped.")
     return valid_records
 
 
@@ -85,28 +89,28 @@ def transform(data):
        - Chuan hoa category thanh Title Case (vi du: "electronics" -> "Electronics")
        - Them cot processed_at = timestamp hien tai
 
-    Goi y:
-       - Dung pd.DataFrame(data) de tao DataFrame
-       - df['discounted_price'] = df['price'] * 0.9
-       - df['category'] = df['category'].str.title()
-       - df['processed_at'] = datetime.datetime.now().isoformat()
-
     Returns:
         pd.DataFrame: DataFrame da duoc transform
     """
-    # TODO: Tao DataFrame va ap dung transformations
-    pass
+    df = pd.DataFrame(data)
+    if df.empty:
+        return df
+
+    df['price'] = pd.to_numeric(df['price'], errors='coerce')
+    df['discounted_price'] = df['price'] * 0.9
+    df['category'] = df['category'].astype(str).str.strip().str.title()
+    df['processed_at'] = datetime.datetime.now().isoformat()
+
+    print(f"Transformation complete. Added discounted_price and processed_at for {len(df)} records.")
+    return df
 
 
 def load(df, output_path):
     """
     Task 4: Luu DataFrame ra file CSV.
-
-    Goi y:
-       - df.to_csv(output_path, index=False)
     """
-    # TODO: Luu DataFrame ra CSV
-    print(f"Data saved to {output_path}")
+    df.to_csv(output_path, index=False)
+    print(f"Data saved to {output_path} with {len(df)} records.")
 
 
 # ============================================================
